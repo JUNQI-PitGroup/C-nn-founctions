@@ -25,12 +25,12 @@ void PointIsInCircle() {
             labelTensor[i][0] = 0; // Outside the circle
 		}
 	}
-    // ¿É×Ô¶¨Òå²ÎÊı
+    // å¯è‡ªå®šä¹‰å‚æ•°
     const int batchSize = batchNum;
     const double initialLearningRate = 0.01;
     const int initialEpoch = 200;
-    const int patience = 200;
-    const double learningRateDecayTo = 0.5; // Ñ§Ï°ÂÊË¥¼õµ½Ô­À´µÄ learningRateDecayTo ±¶
+    const int patience = 50;
+    const double learningRateDecayTo = 0.5; // å­¦ä¹ ç‡è¡°å‡åˆ°åŸæ¥çš„ learningRateDecayTo å€
 
     for (int i = 0; i < batchSize; i++) {
         double doubleInputTensor[inputLength] = { 0 };
