@@ -49,13 +49,7 @@ Load_2Layers_NN_Weight();  // 加载权重文件
 训练示例输出
 
 predicting...  [====================] 5000/5000  for 0.1 s
-Epoch 0/120  BatchLoss = 0.543209255  lr = 0.000000
 training...  [====================] 5000/5000  for 0.3 s
-Epoch 1/120  BatchLoss = 0.534400463  lr = 0.010000
-training...  [====================] 5000/5000  for 0.3 s
-Epoch 2/120  BatchLoss = 0.391641200  lr = 0.010000
-training...  [====================] 5000/5000  for 0.3 s
-Epoch 3/120  BatchLoss = 0.222769946  lr = 0.010000
 
 如何搭建神经网络（以 2 层网络为例）
 
@@ -113,3 +107,4 @@ static void UpdateWeights(float* inputTensor, float* labelTensor, float learning
 想在嵌入式设备或无 Python 环境中运行神经网络的工程人员
 
 如需进一步使用说明或集成方法，欢迎参考示例文件 PointIsInCircle.cpp 或查看 nn_function.cpp 中的函数注释。
+
