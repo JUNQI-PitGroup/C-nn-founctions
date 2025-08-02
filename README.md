@@ -1,81 +1,86 @@
-This a pure C language deep leaning framework, programed when I was in college.
-You can lean how to use network file such as 3_layers_fc_nn in file "PointIsInCircle.cpp", "PointIsInCircle.cpp" is a simple example for using nn flie.
-All nn functions are in file "nn_function.cpp", such as linear, relu, tanh, sigmoid, Conv2d, LearningRateDecay, and their derivatives, and update weights functions. 
+轻量级纯 C 语言深度学习框架
+这是我在大学期间使用纯 C 语言编写的轻量级深度学习框架，支持简单的全连接神经网络和卷积神经网络的前向传播、反向传播与训练。框架不依赖任何第三方库，适合学习深度学习基本原理或在资源受限环境中部署简单模型。
 
+文件结构说明
+nn_function.cpp / .h：所有神经网络函数的实现，包括：
 
-you can train a network easily, like using pytorch in python: 
-1. define your data set:
-  float dataVector[10000][5]; float labelVector[10000][1]; // suppose you have 10000 samples, input length = 5, output length = 1
-2. feedforward your data vector and backward and upgrade weights (you can use AVX2 version, it's 10 times faster)
-  float predictedVector[10000][1];
-  for epochs{
-    for (n = 0; n < BatchNum; n++){
-      Forward_2Layers_NN(DataVector[n], predictedVector[n]); // Feedforward
-      UpdateWeights_2Layers_NN(floatInputTensor, labelTensor[i], learningRate); // Backward and upgrade weights
-      PrintProgressBar("training...", n + 1, batchSize, progressBarLength); // show process
+激活函数及其导数：ReLU、Tanh、Sigmoid, Softmax ...
+
+线性层（全连接层）：Linear, Linear_AVX2
+
+卷积网络：Conv2d, padding, MaxPooling ...
+
+学习率调度器：LearningRateDecay
+
+损失函数及其导数：MSE（均方误差）, CrossEntropyLoss（交叉熵误差）
+
+权重更新函数（含 AVX2 加速版本）
+
+等等 几十个函数
+
+PointIsInCircle.cpp：简单示例，用于演示如何使用训练好的网络文件（例如 3_layers_fc_nn.cpp）判断一个点是否在圆内。
+
+快速入门
+你可以像在 PyTorch 中一样快速搭建网络并训练，只需几步：
+
+1. 准备数据
+float dataVector[10000][5];      // 输入样本（假设一共 10000 个，输入维度为 5）
+float labelVector[10000][1];     // 对应标签（输出维度为 1）
+
+3. 网络前向 + 反向传播 + 权重更新（支持 AVX2 加速）
+float predictedVector[10000][1];
+for (epoch = 0; epoch < initialEpoch; epoch++) {
+    for (n = 0; n < BatchNum; n++) {
+        Forward_2Layers_NN(DataVector[n], predictedVector[n]); // 前向传播
+        UpdateWeights_2Layers_NN(DataVector[n], labelVector[n], learningRate); // 反向传播并更新权重
+        PrintProgressBar("training...", n + 1, batchSize, progressBarLength); // 显示训练进度
     }
-   float batchLoss = MSE_BatchLoss(&predictedVector[0][0], &labelVector[0][0], 1, batchSize);
-   if (EarlyStop(batchLoss, epoch, patience)) break;
-   printf("Epoch %d/%d  BatchLoss = %.9f  lr = %f\n", epoch, initialEpoch, batchLoss, learningRate);
-   }
-   
-  Save_2Layers_NN_Weight() 
-  // you need to create new folders named "2_layers_fc_nn_saved_weight" to contain weights
-  Load_2Layers_NN_Weight()
-  
-  
-This is a training process sample:
-predicting...  [==================================================] 5000/5000  for 0.1s
+    float batchLoss = MSE_BatchLoss(&predictedVector[0][0], &labelVector[0][0], 1, batchSize);
+    if (EarlyStop(batchLoss, epoch, patience)) break;
+    printf("Epoch %d/%d  BatchLoss = %.9f  lr = %f\n", epoch, initialEpoch, batchLoss, learningRate);
+}
+
+3. 保存 / 加载模型参数
+训练前请手动创建目录 2_layers_fc_nn_saved_weight/
+
+Save_2Layers_NN_Weight();  // 保存权重文件
+Load_2Layers_NN_Weight();  // 加载权重文件
+
+训练示例输出
+predicting...  [==================================================] 5000/5000  for 0.1 s
 Epoch 0/120  BatchLoss = 0.543209255  lr = 0.000000
-training...  [==================================================] 5000/5000  for 0.3s
+training...  [==================================================] 5000/5000  for 0.3 s
 Epoch 1/120  BatchLoss = 0.534400463  lr = 0.010000
-training...  [==================================================] 5000/5000  for 0.3s
+training...  [==================================================] 5000/5000  for 0.3 s
 Epoch 2/120  BatchLoss = 0.391641200  lr = 0.010000
-training...  [==================================================] 5000/5000  for 0.3s
+training...  [==================================================] 5000/5000  for 0.3 s
 Epoch 3/120  BatchLoss = 0.222769946  lr = 0.010000
 
-
-How to build a network Function and upgrade it's weights:
-
-#include <stdlib.h>
-#include <stdio.h>
-
-#include "nn_function.h"
+如何搭建神经网络（以 2 层网络为例）
 
 #define inputLength 449
+#define layer1_neuronNum 512
+#define layer2_neuronNum 1
 
-// This is a dense neural network with 2 layers, weight updated by SGD
-#define layer1_neuronNum 512   // ⬇
-#define layer2_neuronNum 1     // ⬇
+static float weightTensor_1[layer1_neuronNum][inputLength + 1] = { 0 }; // 第一层权重
+static float weightTensor_2[layer2_neuronNum][layer1_neuronNum + 1] = { 0 }; // 第二层权重
 
-static float weightTensor_1[layer1_neuronNum][inputLength + 1] = { 0 }; // to save the first layer weights
-static float weightTensor_2[layer2_neuronNum][layer1_neuronNum + 1] = { 0 }; // to save the second layer weights
-
-static float linear1_outputTensor[layer1_neuronNum] = { 0 };
-static float activate1_outputTensor[layer1_neuronNum] = { 0 };
-static float linear2_outputTensor[layer2_neuronNum] = { 0 };
-static float activate2_outputTensor[layer2_neuronNum] = { 0 };
-
+// 前向传播
 static void Forward(float* inputTensor, float* outputTensor) {
-    // first layer
     for (int i = 0; i < layer1_neuronNum; i++) {
         linear1_outputTensor[i] = Linear_AVX2(inputTensor, inputLength, weightTensor_1[i]);
         activate1_outputTensor[i] = ReLU(linear1_outputTensor[i]);
     }
-    // second layer
     for (int i = 0; i < layer2_neuronNum; i++) {
         linear2_outputTensor[i] = Linear_AVX2(activate1_outputTensor, layer1_neuronNum, weightTensor_2[i]);
         activate2_outputTensor[i] = Tanh(linear2_outputTensor[i]);
+        outputTensor[i] = activate2_outputTensor[i];
     }
-    for (int i = 0; i < layer2_neuronNum; i++) outputTensor[i] = activate2_outputTensor[i];
 }
 
-that's very easy
-
-then backward and upgrade weights
+如何更新权重
 
 static void UpdateWeights(float* inputTensor, float* labelTensor, float learningRate) {
-    // backward
     float layer2_grad[layer2_neuronNum]{};
     MSE_LossDerivative(layer2_grad, activate2_outputTensor, labelTensor, layer2_neuronNum);
     TanhVectorDerivative(layer2_grad, layer2_neuronNum, linear2_outputTensor);
@@ -84,7 +89,26 @@ static void UpdateWeights(float* inputTensor, float* labelTensor, float learning
     LinearVectorDerivative(layer2_grad, layer1_grad, layer1_neuronNum, layer2_neuronNum, &weightTensor_2[0][0]);
     ReLuVectorDerivative(layer1_grad, layer1_neuronNum, linear1_outputTensor);
 
-    // upgrade weights
     UpdateLinearWeight_AVX2(&weightTensor_2[0][0], activate1_outputTensor, layer2_grad, layer2_neuronNum, layer1_neuronNum, learningRate);
     UpdateLinearWeight_AVX2(&weightTensor_1[0][0], inputTensor, layer1_grad, layer1_neuronNum, inputLength, learningRate);
 }
+
+特性:
+🧠 支持全连接层、ReLU/Tanh/Sigmoid 激活函数
+
+🧮 支持 MSE 损失函数及导数计算
+
+⚡ 支持 AVX2 加速（速度可提升 10 倍）
+
+💾 支持权重保存/加载
+
+🛠️ 代码结构清晰、模块化，便于扩展
+
+适用人群
+想深入理解神经网络底层实现逻辑的学习者
+
+对 PyTorch/TensorFlow 抽象过高感到困惑的开发者
+
+想在嵌入式设备或无 Python 环境中运行神经网络的工程人员
+
+如需进一步使用说明或集成方法，欢迎参考示例文件 PointIsInCircle.cpp 或查看 nn_function.cpp 中的函数注释。
