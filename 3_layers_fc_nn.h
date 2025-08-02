@@ -4,9 +4,9 @@
 // This is a dense neural network with 3 layers, weight updated by SGD
 
 
-void UpdateWeights_3Layers_NN(double* inputTensor, double* labelTensor, double learningRate);
+void UpdateWeights_3Layers_NN(float* inputTensor, float* labelTensor, float learningRate);
 
-void Forward_3Layers_NN(double* inputTensor, double* outputTensor);
+void Forward_3Layers_NN(float* inputTensor, float* outputTensor);
 
 void Randomized_3Layers_NN_Weight(int seed);
 

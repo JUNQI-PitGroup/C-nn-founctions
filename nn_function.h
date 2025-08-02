@@ -1,93 +1,98 @@
 #pragma once
 
 
-double LearningRateDecay(int epoch, double initialLearningRate, int initialEpoch, double decayRate);
+float LearningRateDecay(int epoch, float initialLearningRate, int initialEpoch, float decayRate);
 
-bool EarlyStop(double batchLoss, int epoch, int patience);
+bool EarlyStop(float batchLoss, int epoch, int patience);
 
-void RandomizeWeightTensor(double* weightTensor, int rows, int cols);
-void XavierInitialize(double* weightTensor, int rows, int cols);
-void HeInitialize(double* weightTensor, int rows, int cols);
-void RandomizeFilterTensor(double* filterTensor, int kernels_1_Num, int channels, int filterWidth, int filterHeight);
+void RandomizeWeightTensor(float* weightTensor, int rows, int cols);
+void XavierInitialize(float* weightTensor, int rows, int cols);
+void HeInitialize(float* weightTensor, int rows, int cols);
+void RandomizeFilterTensor(float* filterTensor, int kernels_1_Num, int channels, int filterWidth, int filterHeight);
 
-void UpdateLinearWeight(double* weightTensor, double* fcInputTensor, double* layerGradTensor, int neuronNum, int inputLength, double learningRate);
-void UpdateFilterAndBias(double* filterTensor, double* filterBias, double* dFilterTensor, double* dFilterBias,
-    int filterNum, int filterChannels, int filterWidth, int filterHeight, double learningRate);
+void UpdateLinearWeight(float* weightTensor, float* fcInputTensor, float* layerGradTensor, int neuronNum, int inputLength, float learningRate);
+void UpdateLinearWeight_AVX2(float* weightTensor, float* fcInputTensor, float* layerGradTensor,
+    int neuronNum, int inputLength, float learningRate);
+void UpdateFilterAndBias(float* filterTensor, float* filterBias, float* dFilterTensor, float* dFilterBias,
+    int filterNum, int filterChannels, int filterWidth, int filterHeight, float learningRate);
 
-double Linear(double* inputTensor, int inputSize, double* weightTensor);
-double ReLU(double x);
-double Sigmoid(double x);
-double Tanh(double x);
-void Softmax(double* inputTensor, double* outputTensor, int length);
-double NoGrad(double x);
+float Linear(float* inputTensor, int inputSize, float* weightTensor);
+float Linear_AVX2(float* inputTensor, int inputSize, float* weightTensor);
+inline float ReLU(float x);
+float Sigmoid(float x);
+float Tanh(float x);
+void Softmax(float* inputTensor, float* outputTensor, int length);
+float NoGrad(float x);
 
-void LinearVector(double* inputTensor, int inputLength, double* weightTensor, int outputLength, double* outputTensor);
-void ReLuVector(double* inputTensor, int length, double* outputTensor);
-void SigmoidVector(double* inputTensor, int length, double* outputTensor);
-void TanhVector(double* inputTensor, int length, double* outputTensor);
-void NoGradVector(double* inputTensor, int length, double* outputTensor);
+void LinearVector(float* inputTensor, int inputLength, float* weightTensor, int outputLength, float* outputTensor);
+void LinearVector_AVX2(float* inputTensor, int inputLength, float* weightTensor, int outputLength, float* outputTensor);
+void ReLuVector(float* inputTensor, int length, float* outputTensor);
+void SigmoidVector(float* inputTensor, int length, float* outputTensor);
+void TanhVector(float* inputTensor, int length, float* outputTensor);
+void NoGradVector(float* inputTensor, int length, float* outputTensor);
 
-double ReLUDerivative(double x);
-double SigmoidDerivative(double x);
-double TanhDerivative(double x);
+float ReLUDerivative(float x);
+float SigmoidDerivative(float x);
+float TanhDerivative(float x);
 
-void LinearVectorDerivative(double* inputDerivativeTensor, double* outputDerivativeTensor, int linearInputLength, int linearOutputLength, double* weightTensor);
-void ReLuVectorDerivative(double* DerivativeTensor, int length, double* reluInputTensor);
-void SigmoidVectorDerivative(double* inputTensor, int length, double* outputTensor);
-void TanhVectorDerivative(double* DerivativeTensor, int length, double* tanhInputTensor);
+void LinearVectorDerivative(float* inputDerivativeTensor, float* outputDerivativeTensor, 
+    int linearInputLength, int linearOutputLength, float* weightTensor);
+void ReLuVectorDerivative(float* DerivativeTensor, int length, float* reluInputTensor);
+void SigmoidVectorDerivative(float* inputTensor, int length, float* outputTensor);
+void TanhVectorDerivative(float* DerivativeTensor, int length, float* tanhInputTensor);
 
 
-void Padding(double* inputTensor, double* paddedTensor, int inputWidth, int inputHeight, int inputChannels, int addWidth, int addHeight);
+void Padding(float* inputTensor, float* paddedTensor, int inputWidth, int inputHeight, int inputChannels, int addWidth, int addHeight);
 
-void Conv(double* inputTensor, int inputWidth, int inputHeight, int inputChannels,
-    double* filterTensor, int filterNum, double* filterBias, int filterWidth, int filterHeight, int stride,
-    double* outputTensor, int outputWidth, int outputHeight);
+void Conv(float* inputTensor, int inputWidth, int inputHeight, int inputChannels,
+    float* filterTensor, int filterNum, float* filterBias, int filterWidth, int filterHeight, int stride,
+    float* outputTensor, int outputWidth, int outputHeight);
 
-void ConvDerivative(double* dOutput, int outputWidth, int outputHeight,
-    double* paddedInputTensor, int paddedInputChannels, int paddedInputWidth, int paddedInputHeight,
-    double* filterTensor, int filterNum, int filterWidth, int filterHeight, int stride, int paddingW, int paddingH,
-    double* dUnpaddedInputTensor, double* dFilterTensor, double* dFilterBias);
+void ConvDerivative(float* dOutput, int outputWidth, int outputHeight,
+    float* paddedInputTensor, int paddedInputChannels, int paddedInputWidth, int paddedInputHeight,
+    float* filterTensor, int filterNum, int filterWidth, int filterHeight, int stride, int paddingW, int paddingH,
+    float* dUnpaddedInputTensor, float* dFilterTensor, float* dFilterBias);
 
-void MaxPooling(double* inputTensor, double* outputTensor, int inputChannels, int inputWidth, int inputHeight,
+void MaxPooling(float* inputTensor, float* outputTensor, int inputChannels, int inputWidth, int inputHeight,
     int poolingKernelWidth, int poolingKernelHeight, int strideWidth, int strideHeight);
-void MinPooling(double* inputTensor, double* outputTensor, int inputChannels, int inputWidth, int inputHeight,
+void MinPooling(float* inputTensor, float* outputTensor, int inputChannels, int inputWidth, int inputHeight,
     int poolingKernelWidth, int poolingKernelHeight, int strideWidth, int strideHeight);
-void AvgPooling(double* inputTensor, double* outputTensor, int inputChannels, int inputWidth, int inputHeight,
+void AvgPooling(float* inputTensor, float* outputTensor, int inputChannels, int inputWidth, int inputHeight,
     int poolingKernelWidth, int poolingKernelHeight, int strideWidth, int strideHeight);
 
-void MaxPoolingDerivatives(double* inputTensor, double* inputDerivativeTensor, double* outputDerivativeTensor,
+void MaxPoolingDerivatives(float* inputTensor, float* inputDerivativeTensor, float* outputDerivativeTensor,
     int Channels, int inputWidth, int inputHeight,
     int poolingKernelWidth, int poolingKernelHeight, int strideWidth, int strideHeight);
-void MinPoolingDerivatives(double* inputTensor, double* inputDerivativeTensor, double* outputDerivativeTensor,
+void MinPoolingDerivatives(float* inputTensor, float* inputDerivativeTensor, float* outputDerivativeTensor,
     int Channels, int inputWidth, int inputHeight,
     int poolingKernelWidth, int poolingKernelHeight, int strideWidth, int strideHeight);
-void AvgPoolingDerivatives(double* inputTensor, double* inputDerivativeTensor, double* outputDerivativeTensor,
+void AvgPoolingDerivatives(float* inputTensor, float* inputDerivativeTensor, float* outputDerivativeTensor,
     int Channels, int inputWidth, int inputHeight,
     int poolingKernelWidth, int poolingKernelHeight, int strideWidth, int strideHeight);
 
-void Flatten(double* inputTensor, double* outputTensor, int inputChannels, int inputWidth, int inputHeight);
+void Flatten(float* inputTensor, float* outputTensor, int inputChannels, int inputWidth, int inputHeight);
 
-double MSE_Loss(double* prediction, double* label, int inputLength);
-double MSE_BatchLoss(double* predictedTensor, double* labelTensor, int eachLength, int batchSize);
-void MSE_LossDerivative(double* gradTensor, double* prediction, double* label, int inputLength);
+float MSE_Loss(float* prediction, float* label, int inputLength);
+float MSE_BatchLoss(float* predictedTensor, float* labelTensor, int eachLength, int batchSize);
+void MSE_LossDerivative(float* gradTensor, float* prediction, float* label, int inputLength);
 
-double CrossEntropyLoss(double* predictedTensor, double* labelTensor, int classNum);
-double CrossEntropyBatchLoss(double* predictedTensor, double* labelTensor, int batchSize, int classNum);
-void SoftmaxAndCrossEntropyLossDerivative(double* softmaxOutput, double* labels, double* lossAndSoftmaxDerivativeTensor, int classNum);
+float CrossEntropyLoss(float* predictedTensor, float* labelTensor, int classNum);
+float CrossEntropyBatchLoss(float* predictedTensor, float* labelTensor, int batchSize, int classNum);
+void SoftmaxAndCrossEntropyLossDerivative(float* softmaxOutput, float* labels, float* lossAndSoftmaxDerivativeTensor, int classNum);
 
 // other tools
-void CopyVector(double* srcTensor, double* dstTensor, int length);
-void RandomizeVector(double* vector, int length);
+void CopyVector(float* srcTensor, float* dstTensor, int length);
+void RandomizeVector(float* vector, int length);
 
-void PrintWeightTensor(double* matrix, int rows, int cols);
-void PrintTensor1D(double* matrix, int length);
-void PrintTensor2D(double* matrix, int rows, int cols); 
-void PrintTensor3D(double* matrix, int channels, int rows, int cols);
-void PrintTensor4D(double* matrix, int num, int channels, int rows, int cols);
+void PrintWeightTensor(float* matrix, int rows, int cols);
+void PrintTensor1D(float* matrix, int length);
+void PrintTensor2D(float* matrix, int rows, int cols); 
+void PrintTensor3D(float* matrix, int channels, int rows, int cols);
+void PrintTensor4D(float* matrix, int num, int channels, int rows, int cols);
 
 void PrintProgressBar(const char* info, int progress, int total, int barLength);
 
-void Save_WeightTensor(double* weightTensor, int rows, int cols, const char* filename);
-void Load_WeightTensor(double* weightTensor, int rows, int cols, const char* filename);
+void Save_WeightTensor(float* weightTensor, int rows, int cols, const char* filename);
+void Load_WeightTensor(float* weightTensor, int rows, int cols, const char* filename);
 
 

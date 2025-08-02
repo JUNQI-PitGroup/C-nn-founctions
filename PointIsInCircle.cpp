@@ -7,54 +7,54 @@
 #define inputLength 2
 #define batchNum 20000
 
-double dataTensor[batchNum][2]{};
-double labelTensor[batchNum][1]{};
-double predictedTensor[batchNum][1]{};
+float dataTensor[batchNum][2]{};
+float labelTensor[batchNum][1]{};
+float predictedTensor[batchNum][1]{};
 
 const int progressBarLength = 20;
 
 void PointIsInCircle() {
     Randomized_3Layers_NN_Weight(45);
 	for (int i = 0; i < batchNum; i++) {
-        dataTensor[i][0] = (double)(rand() % 100) / 100.0 * 2 - 1; // x in [-1, 1]
-        dataTensor[i][1] = (double)(rand() % 100) / 100.0 * 2 - 1; // y in [-1, 1]
+        dataTensor[i][0] = (float)(rand() % 100) / 100.0f * 2 - 1; // x in [-1, 1]
+        dataTensor[i][1] = (float)(rand() % 100) / 100.0f * 2 - 1; // y in [-1, 1]
 		// Check if the point is inside the circle of radius 0.5 centered at (0,0)
-		if (dataTensor[i][0] + dataTensor[i][1] <= 1.0) {
-            labelTensor[i][0] = 1.0; // Inside the circle
+		if (dataTensor[i][0] + dataTensor[i][1] <= 1.0f) {
+            labelTensor[i][0] = 1.0f; // Inside the circle
 		} else {
             labelTensor[i][0] = 0; // Outside the circle
 		}
 	}
-    // å¯è‡ªå®šä¹‰å‚æ•°
+    // ¿É×Ô¶¨Òå²ÎÊý
     const int batchSize = batchNum;
-    const double initialLearningRate = 0.01;
+    const float initialLearningRate = 0.01;
     const int initialEpoch = 200;
-    const int patience = 50;
-    const double learningRateDecayTo = 0.5; // å­¦ä¹ çŽ‡è¡°å‡åˆ°åŽŸæ¥çš„ learningRateDecayTo å€
+    const int patience = 200;
+    const float learningRateDecayTo = 0.5; // Ñ§Ï°ÂÊË¥¼õµ½Ô­À´µÄ learningRateDecayTo ±¶
 
     for (int i = 0; i < batchSize; i++) {
-        double doubleInputTensor[inputLength] = { 0 };
+        float floatInputTensor[inputLength] = { 0 };
         for (int j = 0; j < inputLength; j++)
-            doubleInputTensor[j] = (double)dataTensor[i][j];
-        Forward_3Layers_NN(doubleInputTensor, predictedTensor[i]);
+            floatInputTensor[j] = (float)dataTensor[i][j];
+        Forward_3Layers_NN(floatInputTensor, predictedTensor[i]);
         PrintProgressBar("predicting...", i + 1, batchSize, progressBarLength);
     }
-    double batchLoss = MSE_BatchLoss(&predictedTensor[0][0], &labelTensor[0][0], 1, batchSize);
-    printf("Epoch %d/%d  BatchLoss = %.9f  lr = %f\n", 0, initialEpoch, batchLoss, 0.0);
+    float batchLoss = MSE_BatchLoss(&predictedTensor[0][0], &labelTensor[0][0], 1, batchSize);
+    printf("Epoch %d/%d  BatchLoss = %.9f  lr = %f\n", 0, initialEpoch, batchLoss, 0.0f);
 
 
     for (int epoch = 1; epoch <= initialEpoch; epoch++) {
-        double learningRate = LearningRateDecay(epoch, initialLearningRate, initialEpoch, learningRateDecayTo);
+        float learningRate = LearningRateDecay(epoch, initialLearningRate, initialEpoch, learningRateDecayTo);
         for (int i = 0; i < batchSize; i++) {
-            double doubleInputTensor[inputLength] = { 0 };
+            float floatInputTensor[inputLength] = { 0 };
             for (int j = 0; j < inputLength; j++)
-                doubleInputTensor[j] = (double)dataTensor[i][j];
-            Forward_3Layers_NN(doubleInputTensor, predictedTensor[i]);
+                floatInputTensor[j] = (float)dataTensor[i][j];
+            Forward_3Layers_NN(floatInputTensor, predictedTensor[i]);
             //printf("Loss = %f\n", Loss(predictedTensor[i][0], labelTensor[i][0]));
-            UpdateWeights_3Layers_NN(doubleInputTensor, labelTensor[i], learningRate);
+            UpdateWeights_3Layers_NN(floatInputTensor, labelTensor[i], learningRate);
             PrintProgressBar("training...", i + 1, batchSize, progressBarLength);
         }
-        double batchLoss = MSE_BatchLoss(&predictedTensor[0][0], &labelTensor[0][0], 1, batchSize);
+        float batchLoss = MSE_BatchLoss(&predictedTensor[0][0], &labelTensor[0][0], 1, batchSize);
 
         if (EarlyStop(batchLoss, epoch, patience)) break;
 
