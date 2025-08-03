@@ -3,7 +3,7 @@
 # include <math.h>
 # include <chrono>
 
-#include <immintrin.h> // AVX22 指令集，加速 Linear 层 及其 权重更新 
+#include <immintrin.h> // AVX2 指令集，加速 Linear 层 及其 权重更新 
 //#include <omp.h> // OpenMP（Open Multi-Processing）并行编程接口，用于多线程加速。例：#pragma omp parallel for
 //#include <algorithm> // std::min
 
@@ -802,4 +802,5 @@ void Load_WeightTensor(float* weightTensor, int rows, int cols, const char* file
     }
     fclose(fp);
 }
+
 
