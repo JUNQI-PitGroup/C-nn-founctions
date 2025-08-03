@@ -3,8 +3,8 @@
 # include <math.h>
 # include <chrono>
 
-#include <immintrin.h> // AVX22 Ö¸Áî¼¯£¬¼ÓËÙ Linear ²ã ¼°Æä È¨ÖØ¸üĞÂ 
-//#include <omp.h> // OpenMP£¨Open Multi-Processing£©²¢ĞĞ±à³Ì½Ó¿Ú£¬ÓÃÓÚ¶àÏß³Ì¼ÓËÙ¡£Àı£º#pragma omp parallel for
+#include <immintrin.h> // AVX22 æŒ‡ä»¤é›†ï¼ŒåŠ é€Ÿ Linear å±‚ åŠå…¶ æƒé‡æ›´æ–° 
+//#include <omp.h> // OpenMPï¼ˆOpen Multi-Processingï¼‰å¹¶è¡Œç¼–ç¨‹æ¥å£ï¼Œç”¨äºå¤šçº¿ç¨‹åŠ é€Ÿã€‚ä¾‹ï¼š#pragma omp parallel for
 //#include <algorithm> // std::min
 
 // training functions
@@ -20,7 +20,7 @@ float LearningRateDecay(int epoch, float initialLearningRate, int initialEpoch, 
         return initialLearningRate * decayRate;
 }
 
-float lowestLoss = FLT_MAX; // ÎŞÇî´ó
+float lowestLoss = FLT_MAX; // æ— ç©·å¤§
 int lowestLossEpoch = 0;
 bool EarlyStop(float batchLoss, int epoch, int patience) {
     if (epoch == 1) {
@@ -89,31 +89,31 @@ void UpdateLinearWeight_AVX2(float* weightTensor, float* fcInputTensor, float* l
 
         int k = 0;
 
-        // Ã¿´Î´¦Àí 8 ¸ö float£¨È¨ÖØ + ÊäÈë£©
+        // æ¯æ¬¡å¤„ç† 8 ä¸ª floatï¼ˆæƒé‡ + è¾“å…¥ï¼‰
         for (; k <= inputLength - 8; k += 8) {
-            // ¼ÓÔØÊäÈëÊı¾İ£¨8 ¸ö float£©
+            // åŠ è½½è¾“å…¥æ•°æ®ï¼ˆ8 ä¸ª floatï¼‰
             __m256 input = _mm256_loadu_ps(&fcInputTensor[k]);
 
-            // ¼ÆËãÌİ¶È * ÊäÈë
+            // è®¡ç®—æ¢¯åº¦ * è¾“å…¥
             __m256 delta = _mm256_mul_ps(grad_vec, input);
             delta = _mm256_mul_ps(delta, lr_vec);
 
-            // ¼ÓÔØµ±Ç°È¨ÖØ£¨8 ¸ö float£©
+            // åŠ è½½å½“å‰æƒé‡ï¼ˆ8 ä¸ª floatï¼‰
             __m256 weight = _mm256_loadu_ps(&weightTensor[j * (inputLength + 1) + k]);
 
-            // ¸üĞÂÈ¨ÖØ
+            // æ›´æ–°æƒé‡
             weight = _mm256_sub_ps(weight, delta);
 
-            // ´æ´¢»ØÄÚ´æ
+            // å­˜å‚¨å›å†…å­˜
             _mm256_storeu_ps(&weightTensor[j * (inputLength + 1) + k], weight);
         }
 
-        // ´¦ÀíÊ£Óà²¿·Ö£¨²»×ã 8 ¸ö£©
+        // å¤„ç†å‰©ä½™éƒ¨åˆ†ï¼ˆä¸è¶³ 8 ä¸ªï¼‰
         for (; k < inputLength; k++) {
             weightTensor[j * (inputLength + 1) + k] -= learningRate * grad * fcInputTensor[k];
         }
 
-        // ´¦ÀíÆ«ÖÃÏî
+        // å¤„ç†åç½®é¡¹
         weightTensor[j * (inputLength + 1) + inputLength] -= learningRate * grad;
     }
 }
@@ -139,17 +139,17 @@ float Linear(float* inputTensor, int inputSize, float* weightTensor) {
     return sum;
 }
 float Linear_AVX2(float* inputTensor, int inputSize, float* weightTensor) {
-    __m256 sum_vec = _mm256_setzero_ps();  // ³õÊ¼»¯ÀÛ¼ÓÆ÷£¨8¸öfloat£©
+    __m256 sum_vec = _mm256_setzero_ps();  // åˆå§‹åŒ–ç´¯åŠ å™¨ï¼ˆ8ä¸ªfloatï¼‰
     int i = 0;
 
-    // Ã¿´Î´¦Àí 8 ¸ö float£¨AVX22 256Î»£©
+    // æ¯æ¬¡å¤„ç† 8 ä¸ª floatï¼ˆAVX22 256ä½ï¼‰
     for (; i <= inputSize - 8; i += 8) {
-        __m256 input = _mm256_load_ps(&inputTensor[i]);  // ¼ÓÔØ 8 ¸ö float
-        __m256 weight = _mm256_load_ps(&weightTensor[i]); // ¼ÓÔØ 8 ¸ö float
-        sum_vec = _mm256_fmadd_ps(input, weight, sum_vec); // ³Ë¼ÓÈÚºÏ
+        __m256 input = _mm256_load_ps(&inputTensor[i]);  // åŠ è½½ 8 ä¸ª float
+        __m256 weight = _mm256_load_ps(&weightTensor[i]); // åŠ è½½ 8 ä¸ª float
+        sum_vec = _mm256_fmadd_ps(input, weight, sum_vec); // ä¹˜åŠ èåˆ
     }
 
-    // Ë®Æ½ÇóºÍ£¨sum_vec µÄ 8 ¸ö float Ïà¼Ó£©
+    // æ°´å¹³æ±‚å’Œï¼ˆsum_vec çš„ 8 ä¸ª float ç›¸åŠ ï¼‰
     float sum = 0;
 	float sum_array[8];
     _mm256_storeu_ps(sum_array, sum_vec);
@@ -157,12 +157,12 @@ float Linear_AVX2(float* inputTensor, int inputSize, float* weightTensor) {
     sum += sum_array[0] + sum_array[1] + sum_array[2] + sum_array[3] + 
            sum_array[4] + sum_array[5] + sum_array[6] + sum_array[7];
 
-    // ´¦ÀíÊ£ÓàÔªËØ£¨²»×ã 8 ¸öµÄ²¿·Ö£©
+    // å¤„ç†å‰©ä½™å…ƒç´ ï¼ˆä¸è¶³ 8 ä¸ªçš„éƒ¨åˆ†ï¼‰
     for (; i < inputSize; i++) {
         sum += inputTensor[i] * weightTensor[i];
     }
 
-    // ¼ÓÆ«ÖÃÏî
+    // åŠ åç½®é¡¹
     sum += weightTensor[inputSize];
 
     return sum;
@@ -190,32 +190,32 @@ void Softmax(float* inputTensor, float* outputTensor, int length) {
 
     float sumExp = 0.0f;
     for (int i = 0; i < length; i++) {
-        sumExp += exp(inputTensor[i] - maxVal); // ¼õÈ¥×î´óÖµÒÔÌá¸ßÊıÖµÎÈ¶¨ĞÔ
+        sumExp += exp(inputTensor[i] - maxVal); // å‡å»æœ€å¤§å€¼ä»¥æé«˜æ•°å€¼ç¨³å®šæ€§
     }
 
     for (int i = 0; i < length; i++) {
         outputTensor[i] = exp(inputTensor[i] - maxVal) / sumExp;
     }
     /*
-    ÔÚ Forward º¯ÊıÖĞµÄÊ¹ÓÃ·½·¨£º
-    // ¼ÆËãµÚ¶ş²ãÉñ¾­ÔªµÄÔ­Ê¼Êä³ö
+    åœ¨ Forward å‡½æ•°ä¸­çš„ä½¿ç”¨æ–¹æ³•ï¼š
+    // è®¡ç®—ç¬¬äºŒå±‚ç¥ç»å…ƒçš„åŸå§‹è¾“å‡º
     for (int i = 0; i < layer2_neuronNum; i++) {
         layer2_outputTensor[i] = Linear(layer1_outputTensor, layer1_neuronNum, weightTensor_2[i]);
     }
 
-    // Ê¹ÓÃSoftmax´¦ÀíµÚ¶ş²ãÊä³ö
+    // ä½¿ç”¨Softmaxå¤„ç†ç¬¬äºŒå±‚è¾“å‡º
     Softmax(layer2_outputTensor, outputTensor, layer2_neuronNum);
     */
 }
 
 void LinearVector(float* inputTensor, int inputLength, float* weightTensor, int outputLength, float* outputTensor) {
-    // inputTensor ÊÇÊäÈëÏòÁ¿£¬inputLength ÊÇÊäÈëÏòÁ¿µÄÎ¬¶È£¬weightTensor ÊÇÈ¨ÖØ¾ØÕó£¬outputLength ÊÇÊä³öÏòÁ¿µÄÎ¬¶È£¬outputTensor ÊÇÊä³öÏòÁ¿
+    // inputTensor æ˜¯è¾“å…¥å‘é‡ï¼ŒinputLength æ˜¯è¾“å…¥å‘é‡çš„ç»´åº¦ï¼ŒweightTensor æ˜¯æƒé‡çŸ©é˜µï¼ŒoutputLength æ˜¯è¾“å‡ºå‘é‡çš„ç»´åº¦ï¼ŒoutputTensor æ˜¯è¾“å‡ºå‘é‡
     for (int i = 0; i < outputLength; i++) {
         outputTensor[i] = Linear(inputTensor, inputLength, weightTensor + i * (inputLength + 1));
     }
 }
 void LinearVector_AVX2(float* inputTensor, int inputLength, float* weightTensor, int outputLength, float* outputTensor) {
-    // inputTensor ÊÇÊäÈëÏòÁ¿£¬inputLength ÊÇÊäÈëÏòÁ¿µÄÎ¬¶È£¬weightTensor ÊÇÈ¨ÖØ¾ØÕó£¬outputLength ÊÇÊä³öÏòÁ¿µÄÎ¬¶È£¬outputTensor ÊÇÊä³öÏòÁ¿
+    // inputTensor æ˜¯è¾“å…¥å‘é‡ï¼ŒinputLength æ˜¯è¾“å…¥å‘é‡çš„ç»´åº¦ï¼ŒweightTensor æ˜¯æƒé‡çŸ©é˜µï¼ŒoutputLength æ˜¯è¾“å‡ºå‘é‡çš„ç»´åº¦ï¼ŒoutputTensor æ˜¯è¾“å‡ºå‘é‡
     for (int i = 0; i < outputLength; i++) {
         outputTensor[i] = Linear_AVX2(inputTensor, inputLength, weightTensor + i * (inputLength + 1));
     }
@@ -253,8 +253,8 @@ float TanhDerivative(float x) {
 }
 
 void LinearVectorDerivative(float* inputDerivativeTensor, float* outputDerivativeTensor, int linearInputLength, int linearOutputLength, float* weightTensor) {
-    // inputTensor ÊÇ Loss Ïà¶Ô Linear µÄÌİ¶È£¬outputTensor ÊÇÎÒÃÇÒªÇóµÄÌİ¶È£¨Loss ¶Ô Linear ÉÏÒ»²ãµÄÌİ¶È£©
-    // linearInputLength ÊÇÊäÈëµÄÎ¬¶È£¬outputLength ÊÇÊä³öµÄÎ¬¶È£¨±¾²ãÉñ¾­ÔªÊı£©£¬weightTensor ÊÇ±¾²ãÈ¨ÖØ
+    // inputTensor æ˜¯ Loss ç›¸å¯¹ Linear çš„æ¢¯åº¦ï¼ŒoutputTensor æ˜¯æˆ‘ä»¬è¦æ±‚çš„æ¢¯åº¦ï¼ˆLoss å¯¹ Linear ä¸Šä¸€å±‚çš„æ¢¯åº¦ï¼‰
+    // linearInputLength æ˜¯è¾“å…¥çš„ç»´åº¦ï¼ŒoutputLength æ˜¯è¾“å‡ºçš„ç»´åº¦ï¼ˆæœ¬å±‚ç¥ç»å…ƒæ•°ï¼‰ï¼ŒweightTensor æ˜¯æœ¬å±‚æƒé‡
     for (int j = 0; j < linearInputLength; j++) {
         outputDerivativeTensor[j] = 0;
         for (int k = 0; k < linearOutputLength; k++) {
@@ -263,7 +263,7 @@ void LinearVectorDerivative(float* inputDerivativeTensor, float* outputDerivativ
     }
 }
 void ReLuVectorDerivative(float* DerivativeTensor, int length, float* reluInputTensor) {
-    // DerivativeTensor ÊÇ Loss Ïà¶Ô ReLU Ç°Ò»²ãµÄÌİ¶È£¬reluInputTensor ÊÇÊäÈëµ½ ReLU µÄÌİ¶È
+    // DerivativeTensor æ˜¯ Loss ç›¸å¯¹ ReLU å‰ä¸€å±‚çš„æ¢¯åº¦ï¼ŒreluInputTensor æ˜¯è¾“å…¥åˆ° ReLU çš„æ¢¯åº¦
     for (int i = 0; i < length; i++) {
         DerivativeTensor[i] *= ReLUDerivative(reluInputTensor[i]);
     }
@@ -280,8 +280,8 @@ void TanhVectorDerivative(float* DerivativeTensor, int length, float* tanhInputT
 }
 
 void Padding(float* inputTensor, float* paddedTensor, int inputChannels, int inputWidth, int inputHeight, int addWidth, int addHeight) {
-    // ÔÚÊäÈëµÄÍ¼ÏñµÄ ÉÏÏÂ×óÓÒ ÖÜÎ§Ìí¼Ó 0 ÏñËØ
-    // paddedTensor Ó¦¸ÃÌáÇ°³õÊ¼»¯Îª È«0 ºóÔÙÊäÈëµ½Õâ¸öº¯Êı
+    // åœ¨è¾“å…¥çš„å›¾åƒçš„ ä¸Šä¸‹å·¦å³ å‘¨å›´æ·»åŠ  0 åƒç´ 
+    // paddedTensor åº”è¯¥æå‰åˆå§‹åŒ–ä¸º å…¨0 åå†è¾“å…¥åˆ°è¿™ä¸ªå‡½æ•°
     int inputOneChannelSize = inputWidth * inputHeight;
     int paddedWidth = inputWidth + addWidth * 2;
     int paddedHeight = inputHeight + addHeight * 2;
@@ -300,9 +300,9 @@ void Padding(float* inputTensor, float* paddedTensor, int inputChannels, int inp
 void Conv(float* inputTensor, int inputChannels, int inputWidth, int inputHeight,
           float* filterTensor, int filterNum, float* filterBias, int filterWidth, int filterHeight, int stride,
           float* outputTensor, int outputWidth, int outputHeight) {
-    // ÊäÈë ËùÓĞ Í¨µÀµÄÌØÕ÷Í¼£¬ÊäÈë ËùÓĞ ¾í»ıºË£¬Êä³ö ËùÓĞ Í¨µÀµÄÌØÕ÷Í¼
-    // ¾í»ıºË¿ÉÒÔÊÇÈÎÒâ´óĞ¡ ¾í»ıºËµÄ¶¨Òå£ºfloat filter_n[¾í»ıºË¸öÊı][ÊäÈëÌØÕ÷Í¼µÄÍ¨µÀÊı][¾í»ıºË³¤][¾í»ıºË¿í]; float filterBias[¾í»ıºË¸öÊı];
-    // Êä³öÌØÕ÷Í¼µÄ¶¨Òå£ºfloat layer_n_output[¾í»ıºËÊı][Êä³öÌØÕ÷Í¼µÄĞĞÊı][Êä³öÌØÕ÷Í¼µÄÁĞÊı];
+    // è¾“å…¥ æ‰€æœ‰ é€šé“çš„ç‰¹å¾å›¾ï¼Œè¾“å…¥ æ‰€æœ‰ å·ç§¯æ ¸ï¼Œè¾“å‡º æ‰€æœ‰ é€šé“çš„ç‰¹å¾å›¾
+    // å·ç§¯æ ¸å¯ä»¥æ˜¯ä»»æ„å¤§å° å·ç§¯æ ¸çš„å®šä¹‰ï¼šfloat filter_n[å·ç§¯æ ¸ä¸ªæ•°][è¾“å…¥ç‰¹å¾å›¾çš„é€šé“æ•°][å·ç§¯æ ¸é•¿][å·ç§¯æ ¸å®½]; float filterBias[å·ç§¯æ ¸ä¸ªæ•°];
+    // è¾“å‡ºç‰¹å¾å›¾çš„å®šä¹‰ï¼šfloat layer_n_output[å·ç§¯æ ¸æ•°][è¾“å‡ºç‰¹å¾å›¾çš„è¡Œæ•°][è¾“å‡ºç‰¹å¾å›¾çš„åˆ—æ•°];
     int inputOneChannelSize = inputWidth * inputHeight;
     int filterArea = filterWidth * filterHeight;
     int oneFilterSize = inputChannels * filterArea;
@@ -333,15 +333,15 @@ void ConvDerivative(float* dOutput, int outputWidth, int outputHeight,
     float* filterTensor, int filterNum, int filterWidth, int filterHeight, int stride, int paddingW, int paddingH,
     float* dUnpaddedInputTensor, float* dFilterTensor, float* dFilterBias) {
     /*
-        dOutput ÊÇ´Ó Loss ´«À´µÄÌİ¶È£¨dLoss / dConv£©£¬dUnpaddedInputTensor ÊÇÎÒÃÇÒªÇóµÃµÄ Loss ¶Ô¾í»ı²ãÉÏÒ»²ãµÄÌİ¶È
-        dFilterTensor ÊÇ Loss ¶Ô¾í»ıºËµÄÌİ¶È£¬dFilterBias ÊÇ Loss ¶Ô¾í»ıºËÆ«ÖÃÏîµÄÌİ¶È
-        Èç¹û¾í»ıÇ°ÓĞ padding£¬ÄÇÃ´¾ÍĞ´ W ·½ÏòºÍ H ·½ÏòÉÏÔö¼ÓµÄ 0 µÄÊıÁ¿£¬Èç¹û¾í»ıÇ°Ã» padding£¬ÄÇÃ´¾Í paddingW ºÍ paddingH Îª 0
+        dOutput æ˜¯ä» Loss ä¼ æ¥çš„æ¢¯åº¦ï¼ˆdLoss / dConvï¼‰ï¼ŒdUnpaddedInputTensor æ˜¯æˆ‘ä»¬è¦æ±‚å¾—çš„ Loss å¯¹å·ç§¯å±‚ä¸Šä¸€å±‚çš„æ¢¯åº¦
+        dFilterTensor æ˜¯ Loss å¯¹å·ç§¯æ ¸çš„æ¢¯åº¦ï¼ŒdFilterBias æ˜¯ Loss å¯¹å·ç§¯æ ¸åç½®é¡¹çš„æ¢¯åº¦
+        å¦‚æœå·ç§¯å‰æœ‰ paddingï¼Œé‚£ä¹ˆå°±å†™ W æ–¹å‘å’Œ H æ–¹å‘ä¸Šå¢åŠ çš„ 0 çš„æ•°é‡ï¼Œå¦‚æœå·ç§¯å‰æ²¡ paddingï¼Œé‚£ä¹ˆå°± paddingW å’Œ paddingH ä¸º 0
     */
-    // Ã¿Ò»¸ö¾í»ıºË¶¼ÓĞ paddedInputChannels ¸öÍ¨µÀ£¬Ã¿¸öÍ¨µÀµÄÌİ¶È¶¼ÊÇÉÏÒ»²ãµÄÄ³¸ö¾í»ıºËµÄ½á¹û£¬ËùÒÔ
-    // dUnpaddedInputTensor µÄÎ¬¶ÈÊÇ (unpaddedInputHeight * unpaddedInputWidth, inputChannels)
-    // dFilterTensor µÄÎ¬¶ÈÊÇ (filterHeight * filterWidth, inputChannels)
+    // æ¯ä¸€ä¸ªå·ç§¯æ ¸éƒ½æœ‰ paddedInputChannels ä¸ªé€šé“ï¼Œæ¯ä¸ªé€šé“çš„æ¢¯åº¦éƒ½æ˜¯ä¸Šä¸€å±‚çš„æŸä¸ªå·ç§¯æ ¸çš„ç»“æœï¼Œæ‰€ä»¥
+    // dUnpaddedInputTensor çš„ç»´åº¦æ˜¯ (unpaddedInputHeight * unpaddedInputWidth, inputChannels)
+    // dFilterTensor çš„ç»´åº¦æ˜¯ (filterHeight * filterWidth, inputChannels)
 
-    // dUnpaddedInputTensor, dFilterTensor ºÍ dFilterBias ¶¼Òª³õÊ¼»¯Îª 0 
+    // dUnpaddedInputTensor, dFilterTensor å’Œ dFilterBias éƒ½è¦åˆå§‹åŒ–ä¸º 0 
     int dUnpaddedInputTensorLength = (paddedInputWidth - 2 * paddingW) * (paddedInputHeight - 2 * paddingH) * paddedInputChannels;
     for (int i = 0; i < dUnpaddedInputTensorLength; i++) dUnpaddedInputTensor[i] = 0.0f;
     int dFilterTensorLength = filterWidth * filterHeight * paddedInputChannels * filterNum;
@@ -358,41 +358,41 @@ void ConvDerivative(float* dOutput, int outputWidth, int outputHeight,
     int oneFilterSize = paddedInputChannels * filterArea;
     int outputOneChannelSize = outputWidth * outputHeight;
 
-    // ¼ÆËãÌİ¶È
-    for (int filterIndex = 0; filterIndex < filterNum; filterIndex++) { // ×¢Òâ£¬ÕâÀïµÄ filterIndex ÊÇÖ¸ ¾í»ıºËµÄË÷Òı£¬Í¬ÑùÒ²ÊÇÊä³öµÄÍ¨µÀË÷Òı
+    // è®¡ç®—æ¢¯åº¦
+    for (int filterIndex = 0; filterIndex < filterNum; filterIndex++) { // æ³¨æ„ï¼Œè¿™é‡Œçš„ filterIndex æ˜¯æŒ‡ å·ç§¯æ ¸çš„ç´¢å¼•ï¼ŒåŒæ ·ä¹Ÿæ˜¯è¾“å‡ºçš„é€šé“ç´¢å¼•
         for (int outputRows = 0; outputRows < outputHeight; outputRows++) {
             for (int outputCols = 0; outputCols < outputWidth; outputCols++) {
                 int inputRows = outputRows * stride;
                 int inputCols = outputCols * stride;
                 float dOutputValue = dOutput[filterIndex * outputOneChannelSize + outputRows * outputWidth + outputCols];
 
-                // ¸üĞÂ¾í»ıºËºÍÊäÈëÕÅÁ¿µÄÌİ¶È
+                // æ›´æ–°å·ç§¯æ ¸å’Œè¾“å…¥å¼ é‡çš„æ¢¯åº¦
                 for (int dRows = 0; dRows < filterHeight; dRows++) {
                     for (int dCols = 0; dCols < filterWidth; dCols++) {
-                        // ¼ÆËãÌî³äºóµÄË÷Òı
+                        // è®¡ç®—å¡«å……åçš„ç´¢å¼•
                         int paddedInputRow = inputRows + dRows;
                         int paddedInputCol = inputCols + dCols;
                         int unpaddedInputRow = paddedInputRow - paddingH;
                         int unpaddedInputCol = paddedInputCol - paddingW;
 
-                        // ÅĞ¶ÏÊÇ·ñÔÚ·Ç padding ÇøÓòÄÚ
+                        // åˆ¤æ–­æ˜¯å¦åœ¨é padding åŒºåŸŸå†…
                         if (paddedInputRow >= paddingH && paddedInputRow < paddedInputHeight - paddingH &&
                             paddedInputCol >= paddingW && paddedInputCol < paddedInputWidth - paddingW) {
 
                             for (int channels = 0; channels < paddedInputChannels; channels++) {
-                                // ¼ÆËãÎ´Ìî³äÊäÈëµÄÊµ¼ÊË÷Òı
+                                // è®¡ç®—æœªå¡«å……è¾“å…¥çš„å®é™…ç´¢å¼•
                                 int unpaddedInputIndex = channels * unpaddedInputArea + unpaddedInputRow * unpaddedInputWidth + unpaddedInputCol;
                                 int filterPos = filterIndex * oneFilterSize + channels * filterArea + dRows * filterWidth + dCols;
 
-                                // ¸üĞÂ¾í»ıºËµÄÌİ¶È
+                                // æ›´æ–°å·ç§¯æ ¸çš„æ¢¯åº¦
                                 dFilterTensor[filterPos] += paddedInputTensor[paddedInputRow * paddedInputWidth + paddedInputCol] * dOutputValue;
-                                // ¸üĞÂÎ´Ìî³äÊäÈëµÄÌİ¶È
+                                // æ›´æ–°æœªå¡«å……è¾“å…¥çš„æ¢¯åº¦
                                 dUnpaddedInputTensor[unpaddedInputIndex] += filterTensor[filterPos] * dOutputValue;
                             }
                         }
                     }
                 }
-                // ¸üĞÂÆ«ÖÃÏîµÄÌİ¶È
+                // æ›´æ–°åç½®é¡¹çš„æ¢¯åº¦
                 dFilterBias[filterIndex] += dOutputValue;
             }
         }
@@ -402,7 +402,7 @@ void ConvDerivative(float* dOutput, int outputWidth, int outputHeight,
 // pooling functions and their derivatives
 void MaxPooling(float* inputTensor, float* outputTensor, int inputChannels, int inputWidth, int inputHeight, 
     int poolingKernelWidth, int poolingKernelHeight, int strideWidth, int strideHeight) {
-    // ²ÎÊı£¨ÊäÈë¾ØÕó£¬Êä³ö¾ØÕó£¬Í¨µÀÊı£¬ÊäÈë¿í¶È£¬ÊäÈë¸ß¶È£¬³Ø»¯¿í¶È£¬³Ø»¯¸ß¶È£¬²½³¤¿í¶È£¬²½³¤¸ß¶È£©
+    // å‚æ•°ï¼ˆè¾“å…¥çŸ©é˜µï¼Œè¾“å‡ºçŸ©é˜µï¼Œé€šé“æ•°ï¼Œè¾“å…¥å®½åº¦ï¼Œè¾“å…¥é«˜åº¦ï¼Œæ± åŒ–å®½åº¦ï¼Œæ± åŒ–é«˜åº¦ï¼Œæ­¥é•¿å®½åº¦ï¼Œæ­¥é•¿é«˜åº¦ï¼‰
     int poolingRows = (inputHeight - poolingKernelHeight) / strideHeight + 1;
     int poolingCols = (inputWidth - poolingKernelWidth) / strideWidth + 1;
     int inputOneChannelSize = inputHeight * inputWidth;
@@ -430,7 +430,7 @@ void MaxPooling(float* inputTensor, float* outputTensor, int inputChannels, int 
 }
 void MinPooling(float* inputTensor, float* outputTensor, int inputChannels, int inputWidth, int inputHeight,
     int poolingKernelWidth, int poolingKernelHeight, int strideWidth, int strideHeight) {
-    // ²ÎÊı£¨ÊäÈë¾ØÕó£¬Êä³ö¾ØÕó£¬Í¨µÀÊı£¬ÊäÈë¿í¶È£¬ÊäÈë¸ß¶È£¬³Ø»¯¿í¶È£¬³Ø»¯¸ß¶È£¬²½³¤¿í¶È£¬²½³¤¸ß¶È£©
+    // å‚æ•°ï¼ˆè¾“å…¥çŸ©é˜µï¼Œè¾“å‡ºçŸ©é˜µï¼Œé€šé“æ•°ï¼Œè¾“å…¥å®½åº¦ï¼Œè¾“å…¥é«˜åº¦ï¼Œæ± åŒ–å®½åº¦ï¼Œæ± åŒ–é«˜åº¦ï¼Œæ­¥é•¿å®½åº¦ï¼Œæ­¥é•¿é«˜åº¦ï¼‰
     int poolingRows = (inputHeight - poolingKernelHeight) / strideHeight + 1;
     int poolingCols = (inputWidth - poolingKernelWidth) / strideWidth + 1;
     int inputOneChannelSize = inputHeight * inputWidth;
@@ -458,7 +458,7 @@ void MinPooling(float* inputTensor, float* outputTensor, int inputChannels, int 
 }
 void AvgPooling(float* inputTensor, float* outputTensor, int inputChannels, int inputWidth, int inputHeight,
     int poolingKernelWidth, int poolingKernelHeight, int strideWidth, int strideHeight) {
-    // ²ÎÊı£¨ÊäÈë¾ØÕó£¬Êä³ö¾ØÕó£¬Í¨µÀÊı£¬ÊäÈë¿í¶È£¬ÊäÈë¸ß¶È£¬³Ø»¯¿í¶È£¬³Ø»¯¸ß¶È£¬²½³¤¿í¶È£¬²½³¤¸ß¶È£©
+    // å‚æ•°ï¼ˆè¾“å…¥çŸ©é˜µï¼Œè¾“å‡ºçŸ©é˜µï¼Œé€šé“æ•°ï¼Œè¾“å…¥å®½åº¦ï¼Œè¾“å…¥é«˜åº¦ï¼Œæ± åŒ–å®½åº¦ï¼Œæ± åŒ–é«˜åº¦ï¼Œæ­¥é•¿å®½åº¦ï¼Œæ­¥é•¿é«˜åº¦ï¼‰
     int poolingRows = (inputHeight - poolingKernelHeight) / strideHeight + 1;
     int poolingCols = (inputWidth - poolingKernelWidth) / strideWidth + 1;
     int inputOneChannelSize = inputHeight * inputWidth;
@@ -486,14 +486,14 @@ void MaxPoolingDerivatives(float* inputTensor, float* inputDerivativeTensor, flo
     int Channels, int inputWidth, int inputHeight,
     int poolingKernelWidth, int poolingKernelHeight, int strideWidth, int strideHeight) {
     /* 
-        inputTensor: Ç°Ïò´«²¥Ê±ÊäÈëµ½³Ø»¯²ã¾ØÕó£¬
-        inputDerivativeTensor: ·´Ïò´«²¥Ê±´«Ïò³Ø»¯²ãÇ°µÄµ¼Êı¾ØÕó£¬
-        outputDerivativeTensor: ·´Ïò´«²¥Ê± Loss ¶Ô³Ø»¯²ãÇ°Ò»²ãµÄµ¼Êı¾ØÕó£¬Ò²¾ÍÊÇÎÒÃÇÒªÇóµÄµ¼Êı¾ØÕó
+        inputTensor: å‰å‘ä¼ æ’­æ—¶è¾“å…¥åˆ°æ± åŒ–å±‚çŸ©é˜µï¼Œ
+        inputDerivativeTensor: åå‘ä¼ æ’­æ—¶ä¼ å‘æ± åŒ–å±‚å‰çš„å¯¼æ•°çŸ©é˜µï¼Œ
+        outputDerivativeTensor: åå‘ä¼ æ’­æ—¶ Loss å¯¹æ± åŒ–å±‚å‰ä¸€å±‚çš„å¯¼æ•°çŸ©é˜µï¼Œä¹Ÿå°±æ˜¯æˆ‘ä»¬è¦æ±‚çš„å¯¼æ•°çŸ©é˜µ
         
-        Ç°Ïò´«²¥Ê±µÄÍ¨µÀÊı£¬Ç°Ïò´«²¥Ê±µÄÊäÈë¿í¶È£¬Ç°Ïò´«²¥Ê±µÄÊäÈë¸ß¶È£¬
-        ³Ø»¯¿í¶È£¬³Ø»¯¸ß¶È£¬²½³¤¿í¶È£¬²½³¤¸ß¶È£©
+        å‰å‘ä¼ æ’­æ—¶çš„é€šé“æ•°ï¼Œå‰å‘ä¼ æ’­æ—¶çš„è¾“å…¥å®½åº¦ï¼Œå‰å‘ä¼ æ’­æ—¶çš„è¾“å…¥é«˜åº¦ï¼Œ
+        æ± åŒ–å®½åº¦ï¼Œæ± åŒ–é«˜åº¦ï¼Œæ­¥é•¿å®½åº¦ï¼Œæ­¥é•¿é«˜åº¦ï¼‰
     */
-    // outputDerivativeTensor ³õÊ¼»¯ÎªÈ« 0
+    // outputDerivativeTensor åˆå§‹åŒ–ä¸ºå…¨ 0
 
     int outputDerivativeTensorLength = Channels * inputWidth * inputHeight;
     for (int i = 0; i < outputDerivativeTensorLength; i++) outputDerivativeTensor[i] = 0.0f;
@@ -529,14 +529,14 @@ void MinPoolingDerivatives(float* inputTensor, float* inputDerivativeTensor, flo
     int Channels, int inputWidth, int inputHeight,
     int poolingKernelWidth, int poolingKernelHeight, int strideWidth, int strideHeight) {
     /*
-        inputTensor: Ç°Ïò´«²¥Ê±ÊäÈëµ½³Ø»¯²ã¾ØÕó£¬
-        inputDerivativeTensor: ·´Ïò´«²¥Ê±´«Ïò³Ø»¯²ãÇ°µÄµ¼Êı¾ØÕó£¬
-        outputDerivativeTensor: ·´Ïò´«²¥Ê± Loss ¶Ô³Ø»¯²ãÇ°Ò»²ãµÄµ¼Êı¾ØÕó£¬Ò²¾ÍÊÇÎÒÃÇÒªÇóµÄµ¼Êı¾ØÕó
+        inputTensor: å‰å‘ä¼ æ’­æ—¶è¾“å…¥åˆ°æ± åŒ–å±‚çŸ©é˜µï¼Œ
+        inputDerivativeTensor: åå‘ä¼ æ’­æ—¶ä¼ å‘æ± åŒ–å±‚å‰çš„å¯¼æ•°çŸ©é˜µï¼Œ
+        outputDerivativeTensor: åå‘ä¼ æ’­æ—¶ Loss å¯¹æ± åŒ–å±‚å‰ä¸€å±‚çš„å¯¼æ•°çŸ©é˜µï¼Œä¹Ÿå°±æ˜¯æˆ‘ä»¬è¦æ±‚çš„å¯¼æ•°çŸ©é˜µ
 
-        Ç°Ïò´«²¥Ê±µÄÍ¨µÀÊı£¬Ç°Ïò´«²¥Ê±µÄÊäÈë¿í¶È£¬Ç°Ïò´«²¥Ê±µÄÊäÈë¸ß¶È£¬
-        ³Ø»¯¿í¶È£¬³Ø»¯¸ß¶È£¬²½³¤¿í¶È£¬²½³¤¸ß¶È£©
+        å‰å‘ä¼ æ’­æ—¶çš„é€šé“æ•°ï¼Œå‰å‘ä¼ æ’­æ—¶çš„è¾“å…¥å®½åº¦ï¼Œå‰å‘ä¼ æ’­æ—¶çš„è¾“å…¥é«˜åº¦ï¼Œ
+        æ± åŒ–å®½åº¦ï¼Œæ± åŒ–é«˜åº¦ï¼Œæ­¥é•¿å®½åº¦ï¼Œæ­¥é•¿é«˜åº¦ï¼‰
     */
-    // outputDerivativeTensor ÒªÌáÇ°³õÊ¼»¯ÎªÈ« 0
+    // outputDerivativeTensor è¦æå‰åˆå§‹åŒ–ä¸ºå…¨ 0
     int poolingRows = (inputHeight - poolingKernelHeight) / strideHeight + 1;
     int poolingCols = (inputWidth - poolingKernelWidth) / strideWidth + 1;
     int inputOneChannelSize = inputHeight * inputWidth;
@@ -568,14 +568,14 @@ void AvgPoolingDerivatives(float* inputTensor, float* inputDerivativeTensor, flo
     int Channels, int inputWidth, int inputHeight,
     int poolingKernelWidth, int poolingKernelHeight, int strideWidth, int strideHeight) {
     /*
-        inputTensor: Ç°Ïò´«²¥Ê±ÊäÈëµ½³Ø»¯²ã¾ØÕó£¬
-        inputDerivativeTensor: ·´Ïò´«²¥Ê±´«Ïò³Ø»¯²ãÇ°µÄµ¼Êı¾ØÕó£¬
-        outputDerivativeTensor: ·´Ïò´«²¥Ê± Loss ¶Ô³Ø»¯²ãÇ°Ò»²ãµÄµ¼Êı¾ØÕó£¬Ò²¾ÍÊÇÎÒÃÇÒªÇóµÄµ¼Êı¾ØÕó
+        inputTensor: å‰å‘ä¼ æ’­æ—¶è¾“å…¥åˆ°æ± åŒ–å±‚çŸ©é˜µï¼Œ
+        inputDerivativeTensor: åå‘ä¼ æ’­æ—¶ä¼ å‘æ± åŒ–å±‚å‰çš„å¯¼æ•°çŸ©é˜µï¼Œ
+        outputDerivativeTensor: åå‘ä¼ æ’­æ—¶ Loss å¯¹æ± åŒ–å±‚å‰ä¸€å±‚çš„å¯¼æ•°çŸ©é˜µï¼Œä¹Ÿå°±æ˜¯æˆ‘ä»¬è¦æ±‚çš„å¯¼æ•°çŸ©é˜µ
 
-        Ç°Ïò´«²¥Ê±µÄÍ¨µÀÊı£¬Ç°Ïò´«²¥Ê±µÄÊäÈë¿í¶È£¬Ç°Ïò´«²¥Ê±µÄÊäÈë¸ß¶È£¬
-        ³Ø»¯¿í¶È£¬³Ø»¯¸ß¶È£¬²½³¤¿í¶È£¬²½³¤¸ß¶È£©
+        å‰å‘ä¼ æ’­æ—¶çš„é€šé“æ•°ï¼Œå‰å‘ä¼ æ’­æ—¶çš„è¾“å…¥å®½åº¦ï¼Œå‰å‘ä¼ æ’­æ—¶çš„è¾“å…¥é«˜åº¦ï¼Œ
+        æ± åŒ–å®½åº¦ï¼Œæ± åŒ–é«˜åº¦ï¼Œæ­¥é•¿å®½åº¦ï¼Œæ­¥é•¿é«˜åº¦ï¼‰
     */
-    // outputDerivativeTensor ÒªÌáÇ°³õÊ¼»¯ÎªÈ« 0
+    // outputDerivativeTensor è¦æå‰åˆå§‹åŒ–ä¸ºå…¨ 0
     int poolingRows = (inputHeight - poolingKernelHeight) / strideHeight + 1;
     int poolingCols = (inputWidth - poolingKernelWidth) / strideWidth + 1;
     int inputOneChannelSize = inputHeight * inputWidth;
@@ -628,15 +628,15 @@ void MSE_LossDerivative(float* gradTensor, float* prediction, float* label, int 
         gradTensor[i] = 2 * (prediction[i] - label[i]);
 }
 
-# define EPSILON 1e-15 // ÓÃÓÚ·ÀÖ¹log(0)µÄÎÊÌâ
+# define EPSILON 1e-15 // ç”¨äºé˜²æ­¢log(0)çš„é—®é¢˜
 float CrossEntropyLoss(float* predictedTensor, float* labelTensor, int classNum) {
     float loss = 0.0f;
 
     for (int i = 0; i < classNum; i++) {
-        // ·ÀÖ¹Ô¤²âÖµÎª 0 »ò 1 µ¼ÖÂµÄÊıÖµÎÊÌâ
+        // é˜²æ­¢é¢„æµ‹å€¼ä¸º 0 æˆ– 1 å¯¼è‡´çš„æ•°å€¼é—®é¢˜
         float clampedPredict = fmax(fmin(predictedTensor[i], 1.0f - EPSILON), EPSILON);
 
-        // ¼ÆËã½»²æìØËğÊ§
+        // è®¡ç®—äº¤å‰ç†µæŸå¤±
         loss -= labelTensor[i] * log(clampedPredict);
     }
     return loss;
@@ -650,7 +650,7 @@ float CrossEntropyBatchLoss(float* predictedTensor, float* labelTensor, int batc
 }
 
 void SoftmaxAndCrossEntropyLossDerivative(float* softmaxOutput, float* labels, float* lossAndSoftmaxDerivativeTensor, int classNum) {
-    // softmaxOutput ÊÇÒ»¸ö³¤¶ÈÎª classNum µÄÊı×é£¬ÇóµÃ Loss ¶Ô softmax Ç°Ãæ LinearOutput µÄµ¼Êı
+    // softmaxOutput æ˜¯ä¸€ä¸ªé•¿åº¦ä¸º classNum çš„æ•°ç»„ï¼Œæ±‚å¾— Loss å¯¹ softmax å‰é¢ LinearOutput çš„å¯¼æ•°
     for (int i = 0; i < classNum; i++) {
         lossAndSoftmaxDerivativeTensor[i] = softmaxOutput[i] - labels[i]; // Label - Predict
     }
@@ -739,16 +739,16 @@ static int lastPos = -1;
 static double t1 = 0.0;
 static double gettime()
 {
-    // »ñÈ¡µ±Ç°Ê±¼äµã
+    // è·å–å½“å‰æ—¶é—´ç‚¹
     auto now = std::chrono::high_resolution_clock::now();
 
-    // ×ª»»ÎªºÁÃë
+    // è½¬æ¢ä¸ºæ¯«ç§’
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 
-    // ·µ»Øµ±Ç°Ê±¼ä£¨ºÁÃë£©
+    // è¿”å›å½“å‰æ—¶é—´ï¼ˆæ¯«ç§’ï¼‰
     return static_cast<double>(duration);
 }
-// »á¸²¸ÇÖ®Ç°µÄ´òÓ¡ĞÅÏ¢£¬Çë°ÑÒª´òÓ¡µÄÄÚÈİ·ÅÔÚ½ø¶ÈÌõµÄºóÃæ£¬progressÎªµ±Ç°½ø¶È£¨´Ó1¿ªÊ¼µ½total£©£¬totalÎª×Ü½ø¶È
+// ä¼šè¦†ç›–ä¹‹å‰çš„æ‰“å°ä¿¡æ¯ï¼Œè¯·æŠŠè¦æ‰“å°çš„å†…å®¹æ”¾åœ¨è¿›åº¦æ¡çš„åé¢ï¼Œprogressä¸ºå½“å‰è¿›åº¦ï¼ˆä»1å¼€å§‹åˆ°totalï¼‰ï¼Œtotalä¸ºæ€»è¿›åº¦
 void PrintProgressBar(const char* info, int progress, int total, int barLength) {
     if (barLength <= 0) return;
     if (progress <= 1) t1 = gettime();
@@ -775,14 +775,14 @@ void PrintProgressBar(const char* info, int progress, int total, int barLength) 
 // file tools
 void Save_WeightTensor(float* weightTensor, int rows, int cols, const char* filename) {
     FILE* fp = NULL;
-    errno_t err = fopen_s(&fp, filename, "w"); // ×¢ÒâÕâÀï´«µİµÄÊÇ &fp£¬²¢¸ÄÎªÎÄ±¾Ä£Ê½
+    errno_t err = fopen_s(&fp, filename, "w"); // æ³¨æ„è¿™é‡Œä¼ é€’çš„æ˜¯ &fpï¼Œå¹¶æ”¹ä¸ºæ–‡æœ¬æ¨¡å¼
     if (fp == NULL) {
         printf("File Stream Error: can not open file %s for writing.\n", filename);
         return;
     }
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            fprintf(fp, "%.16f ", weightTensor[i * cols + j]); // ÒÔÎÄ±¾ĞÎÊ½Ğ´Èë£¬±£ÁôĞ¡Êıµãºó16Î»
+            fprintf(fp, "%.16f ", weightTensor[i * cols + j]); // ä»¥æ–‡æœ¬å½¢å¼å†™å…¥ï¼Œä¿ç•™å°æ•°ç‚¹å16ä½
         }
         fprintf(fp, "\n");
     }
@@ -790,14 +790,14 @@ void Save_WeightTensor(float* weightTensor, int rows, int cols, const char* file
 }
 void Load_WeightTensor(float* weightTensor, int rows, int cols, const char* filename) {
     FILE* fp = NULL;
-    errno_t err = fopen_s(&fp, filename, "r"); // ×¢ÒâÕâÀï´«µİµÄÊÇ &fp£¬²¢¸ÄÎªÎÄ±¾Ä£Ê½
+    errno_t err = fopen_s(&fp, filename, "r"); // æ³¨æ„è¿™é‡Œä¼ é€’çš„æ˜¯ &fpï¼Œå¹¶æ”¹ä¸ºæ–‡æœ¬æ¨¡å¼
     if (fp == NULL) {
         printf("File Stream Error: can not open file %s for reading.\n", filename);
         return;
     }
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            fscanf_s(fp, "%lf", &weightTensor[i * cols + j]); // ÒÔÎÄ±¾ĞÎÊ½¶ÁÈ¡
+            fscanf_s(fp, "%lf", &weightTensor[i * cols + j]); // ä»¥æ–‡æœ¬å½¢å¼è¯»å–
         }
     }
     fclose(fp);
