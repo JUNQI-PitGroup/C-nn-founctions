@@ -170,6 +170,9 @@ float Linear_AVX2(float* inputTensor, int inputSize, float* weightTensor) {
 inline float ReLU(float x) {
     return x > 0 ? x : 0.0f;
 }
+inline float LeakyReLU(float x) {
+    return x > 0 ? x : 0.01f * x;
+}
 float Sigmoid(float x) {
     return 1.0f / (1.0f + exp(-x));
 }
@@ -802,6 +805,7 @@ void Load_WeightTensor(float* weightTensor, int rows, int cols, const char* file
     }
     fclose(fp);
 }
+
 
 
 
