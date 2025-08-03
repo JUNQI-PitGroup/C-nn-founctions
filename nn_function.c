@@ -797,11 +797,12 @@ void Load_WeightTensor(float* weightTensor, int rows, int cols, const char* file
     }
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            fscanf_s(fp, "%lf", &weightTensor[i * cols + j]); // 以文本形式读取
+            fscanf_s(fp, "%f", &weightTensor[i * cols + j]); // 以文本形式读取
         }
     }
     fclose(fp);
 }
+
 
 
 
