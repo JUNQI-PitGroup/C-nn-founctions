@@ -4,11 +4,11 @@
 #include "nn_function.h"
 
 
-# define inputLength 449
+# define inputLength 2
 
 // This is a dense neural network with 3 layers, weight updated by SGD
-# define layer1_neuronNum 512   // ⬇
-# define layer2_neuronNum 64    // ⬇
+# define layer1_neuronNum 64   // ⬇
+# define layer2_neuronNum 8    // ⬇
 # define layer3_neuronNum 1     // ⬇
 
 static float weightTensor_1[layer1_neuronNum][inputLength + 1] = { 0 }; // 第一层权重矩阵
@@ -102,3 +102,4 @@ void Load_3Layers_NN_Weight() {
     printf("Loaded 3 Layers Dense NN Weight. (%d -> %d -> %d)\n",
         layer1_neuronNum, layer2_neuronNum, layer3_neuronNum);
 }
+
