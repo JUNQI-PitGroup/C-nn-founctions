@@ -25,11 +25,12 @@ PointIsInCircle.cpp：简单示例，用于演示如何使用训练好的网络�
 你可以像在 PyTorch 中一样快速搭建网络并训练，只需几步：
 
 1. 准备数据
+   
     float dataVector[10000][5];      // 输入样本（假设一共 10000 个，输入维度为 5）
 
     float labelVector[10000][1];     // 对应标签（输出维度为 1）
 
-2. 网络前向 + 反向传播 + 权重更新（支持 AVX2 加速）
+3. 网络前向 + 反向传播 + 权重更新（支持 AVX2 加速）
 
     float predictedVector[10000][1];
     
@@ -53,7 +54,7 @@ PointIsInCircle.cpp：简单示例，用于演示如何使用训练好的网络�
         
     }
 
-3. 保存 / 加载模型参数
+4. 保存 / 加载模型参数
    
 训练前请手动创建目录 2_layers_fc_nn_saved_weight/
 
@@ -165,6 +166,7 @@ PointIsInCircle.cpp：简单示例，用于演示如何使用训练好的网络�
 想在嵌入式设备或无 Python 环境中运行神经网络的工程人员
 
 如需进一步使用说明或集成方法，欢迎参考示例文件 PointIsInCircle.cpp 或查看 nn_function.cpp 中的函数注释。
+
 
 
 
