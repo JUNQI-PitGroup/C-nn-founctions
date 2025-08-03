@@ -146,7 +146,7 @@ PointIsInCircle.cpp：简单示例，用于演示如何使用训练好的网络�
 
 特性:
 
-🧠 全面支持全连接层 AVX2 指令集加速、ReLU/Tanh/Sigmoid 等激活函数。    同时也实现了卷积网络，能实现 VGG 卷积网络
+🧠 全面支持全连接层 AVX2 指令集加速、ReLU/Tanh/Sigmoid 等激活函数，同时也实现了卷积网络，能实现 VGG
 
 🧮 支持 MSE、CrossEntropy 损失函数及导数计算
 
@@ -165,6 +165,7 @@ PointIsInCircle.cpp：简单示例，用于演示如何使用训练好的网络�
 想在嵌入式设备或无 Python 环境中运行神经网络的工程人员
 
 如需进一步使用说明或集成方法，欢迎参考示例文件 PointIsInCircle.cpp 或查看 nn_function.cpp 中的函数注释。
+
 
 
 
