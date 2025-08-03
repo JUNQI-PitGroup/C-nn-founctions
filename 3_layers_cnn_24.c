@@ -4,7 +4,7 @@
 
 #include "nn_function.h"
 
-// Éñ¾­ÍøÂç½á¹¹
+// ç¥ç»ç½‘ç»œç»“æ„
 // Padding -> Conv -> Maxpooling -> Padding -> Conv -> Maxpooling -> Padding -> Conv -> Maxpooling -> Flatten -> FC -> FC -> Softmax
 
 static float filter_1[16][1][3][3], filter_1_bias[16]{}; // Filter[FilterNum][Channels][W][H], Bias[FilterNum]
@@ -28,10 +28,10 @@ static const int fc1_Num = 96, fc2_Num = 4;
 static float fc1_outputTensor[fc1_Num]{};
 static float fc2_outputTensor[fc2_Num]{};
 
-static float weightTensor_1[fc1_Num][32 * 3 * 3 + 1] = { 0 }; // [Êä³ö²ãÉñ¾­ÔªÊı][ÊäÈë²ãÉñ¾­ÔªÊı + 1]
+static float weightTensor_1[fc1_Num][32 * 3 * 3 + 1] = { 0 }; // [è¾“å‡ºå±‚ç¥ç»å…ƒæ•°][è¾“å…¥å±‚ç¥ç»å…ƒæ•° + 1]
 static float weightTensor_2[fc2_Num][fc1_Num + 1] = { 0 };
 
-// UpdateWeights ÖĞµÄ¸÷²ãÌİ¶È·ÅÖÃ
+// UpdateWeights ä¸­çš„å„å±‚æ¢¯åº¦æ”¾ç½®
 static float pooling3_grad[32][6][6]{};
 static float conv3_grad[32][6][6]{}, filter3_grad[32][32][3][3]{}, filter3_bias_grad[32]{};
 static float pooling2_grad[32][12][12]{};
@@ -40,66 +40,66 @@ static float pooling1_grad[16][24][24]{};
 static float conv1_grad[1][24][24]{}, filter1_grad[16][1][3][3]{}, filter1_bias_grad[16]{};
 
 static void UpdateWeights(float* predictedTensor, float* labelTensor, float learningRate) {
-    // ¼ÆËã CrosEntropyLoss ºÍ Softmax µÄÌİ¶È£¬Ò²¾ÍÊÇ Loss ¶ÔµÚ¶ş²ã Linear µÄÌİ¶È
+    // è®¡ç®— CrosEntropyLoss å’Œ Softmax çš„æ¢¯åº¦ï¼Œä¹Ÿå°±æ˜¯ Loss å¯¹ç¬¬äºŒå±‚ Linear çš„æ¢¯åº¦
     float linear1_grad[fc2_Num]{};
     SoftmaxAndCrossEntropyLossDerivative(predictedTensor, labelTensor, linear1_grad, fc2_Num);
     
-    // ¼ÆËã¶ÔµÚÒ»²ã Linear Ìİ¶È
+    // è®¡ç®—å¯¹ç¬¬ä¸€å±‚ Linear æ¢¯åº¦
     float linear2_grad[fc1_Num]{};
     LinearVectorDerivative(linear1_grad, linear2_grad, fc1_Num, fc2_Num, &weightTensor_2[0][0]);
     ReLuVectorDerivative(linear2_grad, fc1_Num, fc1_outputTensor);
 
-    // ¼ÆËã¶Ô flatten µÄÌİ¶È£¬ÓÉÓÚ flatten ²ãÃ»×öÈÎºÎÊÂ£¬²»ÓÃ±£´æÌİ¶È¾ØÕó£¬ËùÒÔÏàµ±ÓÚ¶Ô pooling3 µÄÌİ¶È
+    // è®¡ç®—å¯¹ flatten çš„æ¢¯åº¦ï¼Œç”±äº flatten å±‚æ²¡åšä»»ä½•äº‹ï¼Œä¸ç”¨ä¿å­˜æ¢¯åº¦çŸ©é˜µï¼Œæ‰€ä»¥ç›¸å½“äºå¯¹ pooling3 çš„æ¢¯åº¦
     float* flatten_grad = (float*)calloc(32 * 3 * 3, sizeof(float));
     if (flatten_grad == NULL) { printf("Memory allocation for flatten_grad failed.\n"); return; }
     LinearVectorDerivative(linear2_grad, flatten_grad, 32 * 3 * 3, fc1_Num, &weightTensor_1[0][0]);
 
-    // ¼ÆËã¶Ô conv ReLU3 µÄÌİ¶È
+    // è®¡ç®—å¯¹ conv ReLU3 çš„æ¢¯åº¦
     // float pooling3_grad[32][6][6]{};
     MaxPoolingDerivatives(&conv3_outputTensor[0][0][0], flatten_grad, &pooling3_grad[0][0][0], 32, 6, 6, 2, 2, 2, 2);
     free(flatten_grad);
 
-    // ¼ÆËã¶Ô conv3 µÄÌİ¶È
+    // è®¡ç®—å¯¹ conv3 çš„æ¢¯åº¦
     ReLuVectorDerivative(&pooling3_grad[0][0][0], 32 * 6 * 6, &conv3_outputTensor[0][0][0]);
 
-    // ¼ÆËã¶Ô maxpooling2 µÄÌİ¶È ºÍ ¶Ô filter3 µÄÌİ¶È
+    // è®¡ç®—å¯¹ maxpooling2 çš„æ¢¯åº¦ å’Œ å¯¹ filter3 çš„æ¢¯åº¦
     // float conv3_grad[32][6][6]{}, filter3_grad[32][32][3][3]{}, filter3_bias_grad[32]{};
     ConvDerivative(&pooling3_grad[0][0][0], 6, 6, &paddedInputTensor_3[0][0][0], 32, 8, 8, &filter_3[0][0][0][0], 32, 3, 3, 1, 1, 1,
         &conv3_grad[0][0][0], &filter3_grad[0][0][0][0], filter3_bias_grad);
 
-    // ¼ÆËã¶Ô conv ReLU2 µÄÌİ¶È
+    // è®¡ç®—å¯¹ conv ReLU2 çš„æ¢¯åº¦
     // float pooling2_grad[32][12][12]{};
     MaxPoolingDerivatives(&conv2_outputTensor[0][0][0], &conv3_grad[0][0][0], &pooling2_grad[0][0][0], 32, 12, 12, 2, 2, 2, 2);
 
-    // ¼ÆËã¶Ô conv2 µÄÌİ¶È
+    // è®¡ç®—å¯¹ conv2 çš„æ¢¯åº¦
     ReLuVectorDerivative(&pooling2_grad[0][0][0], 32 * 12 * 12, &conv2_outputTensor[0][0][0]);
 
-    // ¼ÆËã¶Ô maxpooling1 µÄÌİ¶È ºÍ ¶Ô filter2 µÄÌİ¶È
+    // è®¡ç®—å¯¹ maxpooling1 çš„æ¢¯åº¦ å’Œ å¯¹ filter2 çš„æ¢¯åº¦
     // float conv2_grad[16][12][12]{}, filter2_grad[32][16][3][3]{}, filter2_bias_grad[32]{};
     ConvDerivative(&pooling2_grad[0][0][0], 12, 12, &paddedInputTensor_2[0][0][0], 16, 14, 14, &filter_2[0][0][0][0], 32, 3, 3, 1, 1, 1,
         &conv2_grad[0][0][0], &filter2_grad[0][0][0][0], filter2_bias_grad);
 
-    // ¼ÆËã¶Ô conv ReLU1 µÄÌİ¶È
+    // è®¡ç®—å¯¹ conv ReLU1 çš„æ¢¯åº¦
     // float pooling1_grad[16][24][24]{};
     MaxPoolingDerivatives(&conv1_outputTensor[0][0][0], &conv2_grad[0][0][0], &pooling1_grad[0][0][0], 16, 24, 24, 2, 2, 2, 2);
 
-    // ¼ÆËã¶Ô conv2 µÄÌİ¶È
+    // è®¡ç®—å¯¹ conv2 çš„æ¢¯åº¦
     ReLuVectorDerivative(&pooling1_grad[0][0][0], 16 * 24 * 24, &conv1_outputTensor[0][0][0]);
 
-    // ¼ÆËã¶Ô ÊäÈëÌØÕ÷Í¼ µÄÌİ¶È ºÍ ¶Ô filter1 µÄÌİ¶È
+    // è®¡ç®—å¯¹ è¾“å…¥ç‰¹å¾å›¾ çš„æ¢¯åº¦ å’Œ å¯¹ filter1 çš„æ¢¯åº¦
     // float conv1_grad[1][24][24]{}, filter1_grad[16][1][3][3]{}, filter1_bias_grad[16]{};
     ConvDerivative(&pooling1_grad[0][0][0], 24, 24, &paddedInputTensor_1[0][0][0], 1, 26, 26, &filter_1[0][0][0][0], 16, 3, 3, 1, 1, 1,
         &conv1_grad[0][0][0], &filter1_grad[0][0][0][0], filter1_bias_grad);
 
-    // ¸üĞÂÈ¨ÖØ fc1
+    // æ›´æ–°æƒé‡ fc1
     UpdateLinearWeight_AVX2(&weightTensor_1[0][0], flattenOutputTensor, linear2_grad, fc1_Num, 32 * 3 * 3, learningRate);
-    // ¸üĞÂÈ¨ÖØ fc2
+    // æ›´æ–°æƒé‡ fc2
     UpdateLinearWeight_AVX2(&weightTensor_2[0][0], &fc1_outputTensor[0], linear1_grad, fc2_Num, fc1_Num, learningRate);
-    // ¸üĞÂÈ¨ÖØ filter1
+    // æ›´æ–°æƒé‡ filter1
     UpdateFilterAndBias(&filter_1[0][0][0][0], filter_1_bias, &filter1_grad[0][0][0][0], filter1_bias_grad, 16, 1, 3, 3, learningRate);
-    // ¸üĞÂÈ¨ÖØ filter2
+    // æ›´æ–°æƒé‡ filter2
     UpdateFilterAndBias(&filter_2[0][0][0][0], filter_2_bias, &filter2_grad[0][0][0][0], filter2_bias_grad, 32, 16, 3, 3, learningRate);
-    // ¸üĞÂÈ¨ÖØ filter3
+    // æ›´æ–°æƒé‡ filter3
     UpdateFilterAndBias(&filter_3[0][0][0][0], filter_3_bias, &filter3_grad[0][0][0][0], filter3_bias_grad, 32, 32, 3, 3, learningRate);
 }
 
@@ -168,7 +168,7 @@ static void Forward(float* inputTensor, float* outputTensor) {
 
     // Current Tensor Shape (Length) = 32 * 3 * 3
 
-    // fc1_Num ¸öÉñ¾­ÔªÈ«Á¬½Ó²ã
+    // fc1_Num ä¸ªç¥ç»å…ƒå…¨è¿æ¥å±‚
     for (int i = 0; i < fc1_Num; i++) {
         fc1_outputTensor[i] = Linear_AVX2(&flattenOutputTensor[0], 32 * 3 * 3, weightTensor_1[i]);
         fc1_outputTensor[i] = ReLU(fc1_outputTensor[i]);
@@ -176,7 +176,7 @@ static void Forward(float* inputTensor, float* outputTensor) {
 
     // Current Tensor Shape (Length) = 128
 
-    // 3 ¸öÉñ¾­ÔªÊä³ö²ã
+    // 3 ä¸ªç¥ç»å…ƒè¾“å‡ºå±‚
     for (int i = 0; i < fc2_Num; i++) {
         fc2_outputTensor[i] = Linear_AVX2(&fc1_outputTensor[0], fc1_Num, weightTensor_2[i]);
     }
@@ -185,7 +185,7 @@ static void Forward(float* inputTensor, float* outputTensor) {
     // Current Tensor Shape (Length) = 3
 }
 
-// ÒÔÏÂÊÇ¶ÔÍâº¯Êı
+// ä»¥ä¸‹æ˜¯å¯¹å¤–å‡½æ•°
 
 void UpdateWeights_3Layers_CNN(float* predictedTensor, float* labelTensor, float learningRate) {
     UpdateWeights(predictedTensor, labelTensor, learningRate);
@@ -197,13 +197,13 @@ void Forward_3Layers_CNN(float* inputTensor, float* outputTensor) {
 
 void Randomized_3Layers_CNN_Weight(int seed) {
     srand(seed);
-    // (filter[], filterNum, channels, filterW, filterH) £¬Bias ²»ĞèÒªËæ»ú»¯£¨Ä¬ÈÏ 0£©
+    // (filter[], filterNum, channels, filterW, filterH) ï¼ŒBias ä¸éœ€è¦éšæœºåŒ–ï¼ˆé»˜è®¤ 0ï¼‰
     RandomizeFilterTensor(&filter_1[0][0][0][0], 16, 1, 3, 3);
     RandomizeFilterTensor(&filter_2[0][0][0][0], 32, 16, 3, 3);
     RandomizeFilterTensor(&filter_3[0][0][0][0], 32, 32, 3, 3);
 
-    HeInitialize(&weightTensor_1[0][0], fc1_Num, 32 * 3 * 3 + 1); // ÊÊºÏ³õÊ¼»¯ ReLU ¼¤»îº¯Êı
-    XavierInitialize(&weightTensor_2[0][0], fc2_Num, fc1_Num + 1);// ÊÊºÏ³õÊ¼»¯ Softmax ¼¤»îº¯Êı£¬ÓĞÖúÓÚÔÚÊäÈëºÍÊä³öÖ®¼ä±£³ÖÌİ¶ÈµÄÎÈ¶¨
+    HeInitialize(&weightTensor_1[0][0], fc1_Num, 32 * 3 * 3 + 1); // é€‚åˆåˆå§‹åŒ– ReLU æ¿€æ´»å‡½æ•°
+    XavierInitialize(&weightTensor_2[0][0], fc2_Num, fc1_Num + 1);// é€‚åˆåˆå§‹åŒ– Softmax æ¿€æ´»å‡½æ•°ï¼Œæœ‰åŠ©äºåœ¨è¾“å…¥å’Œè¾“å‡ºä¹‹é—´ä¿æŒæ¢¯åº¦çš„ç¨³å®š
     printf("Weight Randomized.\n");
 }
 
