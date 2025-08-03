@@ -19,6 +19,7 @@ void UpdateFilterAndBias(float* filterTensor, float* filterBias, float* dFilterT
 float Linear(float* inputTensor, int inputSize, float* weightTensor);
 float Linear_AVX2(float* inputTensor, int inputSize, float* weightTensor);
 inline float ReLU(float x);
+inline float LeakyReLU(float x);
 float Sigmoid(float x);
 float Tanh(float x);
 void Softmax(float* inputTensor, float* outputTensor, int length);
@@ -94,5 +95,6 @@ void PrintProgressBar(const char* info, int progress, int total, int barLength);
 
 void Save_WeightTensor(float* weightTensor, int rows, int cols, const char* filename);
 void Load_WeightTensor(float* weightTensor, int rows, int cols, const char* filename);
+
 
 
