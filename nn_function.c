@@ -782,7 +782,7 @@ void Save_WeightTensor(float* weightTensor, int rows, int cols, const char* file
     }
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            fprintf(fp, "%.16f ", weightTensor[i * cols + j]); // 以文本形式写入，保留小数点后16位
+            fprintf(fp, "%.8f ", weightTensor[i * cols + j]); // 以文本形式写入，保留小数点后16位
         }
         fprintf(fp, "\n");
     }
@@ -802,5 +802,6 @@ void Load_WeightTensor(float* weightTensor, int rows, int cols, const char* file
     }
     fclose(fp);
 }
+
 
 
