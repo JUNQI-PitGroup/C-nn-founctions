@@ -126,17 +126,27 @@ static void UpdateWeights(float* inputTensor, float* labelTensor, float learning
 }
 
 特性:
+
 🧠 支持全连接层、ReLU/Tanh/Sigmoid 激活函数
+
 🧮 支持 MSE 损失函数及导数计算
+
 ⚡ 支持 AVX2 加速（速度可提升 10 倍）
+
 💾 支持权重保存/加载
+
 🛠️ 代码结构清晰、模块化，便于扩展
 
 适用人群
+
 想深入理解神经网络底层实现逻辑的学习者
+
 对 PyTorch/TensorFlow 抽象过高感到困惑的开发者
+
 想在嵌入式设备或无 Python 环境中运行神经网络的工程人员
+
 如需进一步使用说明或集成方法，欢迎参考示例文件 PointIsInCircle.cpp 或查看 nn_function.cpp 中的函数注释。
+
 
 
 
