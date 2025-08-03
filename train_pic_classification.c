@@ -11,7 +11,7 @@
 # define Channels 1
 # define BatchSize 12
 # define Width 24
-const int oneNum = 3; // Ò»¸öÊı×ÖÓĞ¼¸ÕÅÍ¼
+const int oneNum = 3; // ä¸€ä¸ªæ•°å­—æœ‰å‡ å¼ å›¾
 
 static float cnnDataTensor[BatchSize][Channels][Width][Width]{};
 static float labelTensor[BatchSize][CLASS_NUM]{};
@@ -29,7 +29,7 @@ void TrainPic() {
 	Randomized_3Layers_CNN_Weight(45);
 	/*RandomizeVector(&cnnDataTensor[0][0][0][0], BatchSize * Channels * Width * Width);*/
 
-	// ¼ÓÔØÍ¼Ïñ
+	// åŠ è½½å›¾åƒ
 	int width, height, channels;
 	for (int n = 0; n < BatchSize; n++) {
 		char a[] = "num_pic//pic_num_";
