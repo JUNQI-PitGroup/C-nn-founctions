@@ -1,14 +1,22 @@
 轻量级纯 C 语言深度学习框架
-这是我在大学期间使用纯 C 语言编写的轻量级深度学习框架，支持简单的全连接神经网络和卷积神经网络的前向传播、反向传播与训练。框架不依赖任何第三方库，适合学习深度学习基本原理或在资源受限环境中部署简单模型。
+这是我在大学期间使用纯 C 语言编写的轻量级深度学习框架，支持简单的全连接神经网络和卷积神经网络的前向传播、反向传播与训练。
+框架不依赖任何第三方库，适合学习深度学习基本原理或在资源受限环境中部署简单模型。
 
 文件结构说明
 nn_function .cpp / .h：所有神经网络函数的实现，包括：
+
 激活函数及其导数：ReLU、Tanh、Sigmoid, Softmax ...
+
 线性层（全连接层）：Linear, Linear_AVX2
+
 卷积网络：Conv2d, padding, MaxPooling ...
+
 学习率调度器：LearningRateDecay
+
 损失函数及其导数：MSE（均方误差）, CrossEntropyLoss（交叉熵误差）
+
 权重更新函数（含 AVX2 加速版本）
+
 等等 几十个函数
 
 PointIsInCircle.cpp：简单示例，用于演示如何使用训练好的网络文件（例如 3_layers_fc_nn.cpp）判断一个点是否在圆内。
@@ -129,5 +137,6 @@ static void UpdateWeights(float* inputTensor, float* labelTensor, float learning
 对 PyTorch/TensorFlow 抽象过高感到困惑的开发者
 想在嵌入式设备或无 Python 环境中运行神经网络的工程人员
 如需进一步使用说明或集成方法，欢迎参考示例文件 PointIsInCircle.cpp 或查看 nn_function.cpp 中的函数注释。
+
 
 
